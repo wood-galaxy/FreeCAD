@@ -17,10 +17,10 @@ SET (MaterialLib_Files
     StandardMaterial/None.FCMat
     StandardMaterial/ABS.FCMat
     StandardMaterial/CalculiX.FCMat
-    StandardMaterial/Concrete.FCMat
+    StandardMaterial/Concrete-Generic.FCMat
     StandardMaterial/PLA.FCMat
-    StandardMaterial/Steel.FCMat
-    StandardMaterial/Wood.FCMat
+    StandardMaterial/Steel-Generic.FCMat
+    StandardMaterial/Wood-Generic.FCMat
     StandardMaterial/Readme.txt
 )
 SOURCE_GROUP("MatLib" FILES ${MaterialLib_Files})
@@ -29,7 +29,7 @@ ADD_CUSTOM_TARGET(Material ALL
     SOURCES ${Material_SRCS} ${Material_QRC_SRCS}
 )
 
-fc_target_copy_resource(Material 
+fc_target_copy_resource(Material
     ${CMAKE_SOURCE_DIR}/src/Mod/Material
     ${CMAKE_BINARY_DIR}/Mod/Material
     ${Material_SRCS})
@@ -45,7 +45,7 @@ ADD_CUSTOM_TARGET(MaterialLib ALL
 
 # When a target copies files to different output directories then apparently it always builds the project
 # which is very annoying. So, the trick is to split this into two targets to avoid this behaviour.
-fc_target_copy_resource(MaterialLib 
+fc_target_copy_resource(MaterialLib
     ${CMAKE_SOURCE_DIR}/src/Mod/Material
     ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_DATADIR}/Mod/Material
     ${MaterialLib_Files})

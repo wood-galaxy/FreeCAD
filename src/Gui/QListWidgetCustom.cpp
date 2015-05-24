@@ -1,5 +1,6 @@
 /***************************************************************************
- *   Copyright (c) 2012 Werner Mayer <wmayer[at]users.sourceforge.net>     *
+ *   Copyright (c) 2015 FreeCAD Developers                                 *
+ *   Author: Przemo Firszt <przemo@firszt.eu>                              *
  *                                                                         *
  *   This file is part of the FreeCAD CAx development system.              *
  *                                                                         *
@@ -20,56 +21,44 @@
  *                                                                         *
  ***************************************************************************/
 
+#include "PreCompiled.h"
+#ifndef _PreComp_
+# include <QListWidget>
+# include <QDragMoveEvent>
+# include <QString>
+#endif
 
-#ifndef FEMGUI_HYPOTHESIS_H
-#define FEMGUI_HYPOTHESIS_H
+#include "QListWidgetCustom.h" 
 
-#include <Gui/TaskView/TaskView.h>
-#include <Gui/TaskView/TaskDialog.h>
-
-namespace FemGui {
-
-class Ui_HypothesisWidget;
-class HypothesisWidget : public QWidget
+QListWidgetCustom::QListWidgetCustom(QWidget * parent)
+  : QListWidget(parent)
 {
-    Q_OBJECT
+}
 
-public:
-    HypothesisWidget(QWidget* parent = 0);
-    ~HypothesisWidget();
-    bool accept();
-    bool reject();
-
-private:
-    void changeEvent(QEvent *e);
-
-private:
-    Ui_HypothesisWidget* ui;
-};
-
-class TaskHypothesis : public Gui::TaskView::TaskDialog
+QListWidgetCustom::~QListWidgetCustom()
 {
-    Q_OBJECT
+}
 
-public:
-    TaskHypothesis();
-    ~TaskHypothesis();
+/* Overriden dragMoveEvent prevents dragging items that originated
+ * from the same list for "disabled workbenches". Dragging from outside
+ * is still allowed. Also it blocks dragging from another instance of FreeCAD
+ */
+void QListWidgetCustom::dragMoveEvent(QDragMoveEvent *e)
+{
+    if (e->source() != 0) {
+        const QString disabled_wbs = QString::fromAscii("disabled workbenches");
+        if (e->source()->accessibleName() == disabled_wbs) {
+            if (e->source() == this) {
+                e->ignore();
+            } else {
+                e->accept();
+            }
+        } else {
+            e->accept();
+        }
+    } else {
+        e->ignore();
+    }
+}
 
-public:
-    void open();
-    bool accept();
-    bool reject();
-
-    QDialogButtonBox::StandardButtons getStandardButtons() const
-    { return QDialogButtonBox::Ok | QDialogButtonBox::Cancel; }
-    bool needsFullSpace() const
-    { return true; }
-
-private:
-    HypothesisWidget* widget;
-    Gui::TaskView::TaskBox* taskbox;
-};
-
-} //namespace FemGui
-
-#endif // FEMGUI_HYPOTHESIS_H
+#include "moc_QListWidgetCustom.cpp"

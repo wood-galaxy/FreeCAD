@@ -31,7 +31,7 @@ SET(Arch_SRCS
     ArchCutPlane.py
     ArchServer.py
     ArchMaterial.py
-    ArchMaterial.ui
+    ArchSchedule.py
 )
 SOURCE_GROUP("" FILES ${Arch_SRCS})
 

@@ -597,7 +597,14 @@ def getMovableChildren(objectslist,recursive=False):
             for child in children:
                 if hasattr(child,"MoveWithHost"):
                     if child.MoveWithHost:
-                        added.append(child)
+                        if hasattr(obj,"CloneOf"):
+                            if obj.CloneOf:
+                                if obj.CloneOf.Name != child.Name:
+                                    added.append(child)
+                            else:
+                                added.append(child)
+                        else:
+                            added.append(child)
             if recursive:
                 added.extend(getMovableChildren(children))
     return added
@@ -4237,7 +4244,8 @@ class _Wire(_DraftObject):
             if len(obj.Points) > 2:
                 obj.setEditorMode('Start',2)
                 obj.setEditorMode('End',2)
-                obj.setEditorMode('Length',2)
+                if hasattr(obj,"Length"):
+                    obj.setEditorMode('Length',2)
                         
 
 class _ViewProviderWire(_ViewProviderDraft):

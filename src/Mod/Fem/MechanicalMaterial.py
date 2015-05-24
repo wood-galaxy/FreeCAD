@@ -49,7 +49,7 @@ class _CommandMechanicalMaterial:
     def GetResources(self):
         return {'Pixmap': 'Fem_Material',
                 'MenuText': QtCore.QT_TRANSLATE_NOOP("Fem_Material", "Mechanical material..."),
-                'Accel': "A, X",
+                'Accel': "M, M",
                 'ToolTip': QtCore.QT_TRANSLATE_NOOP("Fem_Material", "Creates or edit the mechanical material definition.")}
 
     def Activated(self):
@@ -158,32 +158,25 @@ class _MechanicalMaterialTaskPanel:
         self.print_mat_data(self.previous_material)
         FreeCADGui.ActiveDocument.resetEdit()
 
-# Function not yet used
-#    def saveMat(self):
-#        self.transferTo()
-#        filename = QtGui.QFileDialog.getSaveFileName(None, 'Save Material file file',self.params.GetString("MaterialDir",'/'),'FreeCAD material file (*.FCMat)')
-#        if(filename):
-#            import Material
-#            Material.exportFCMat(filename,self.obj.Material)
-
     def goMatWeb(self):
         import webbrowser
         webbrowser.open("http://matweb.com")
 
     def ym_changed(self, value):
         import Units
-        old_ym = Units.Quantity(self.obj.Material['Mechanical_youngsmodulus'])
+        old_ym = Units.Quantity(self.obj.Material['YoungsModulus'])
         if old_ym != value:
             material = self.obj.Material
-            material['Mechanical_youngsmodulus'] = unicode(value)
+            # FreeCAD uses kPa internall for Stress
+            material['YoungsModulus'] = unicode(value) + " kPa"
             self.obj.Material = material
 
     def pr_changed(self, value):
         import Units
-        old_pr = Units.Quantity(self.obj.Material['FEM_poissonratio'])
+        old_pr = Units.Quantity(self.obj.Material['PoissonRatio'])
         if old_pr != value:
             material = self.obj.Material
-            material['FEM_poissonratio'] = unicode(value)
+            material['PoissonRatio'] = unicode(value)
             self.obj.Material = material
 
     def choose_material(self, index):
@@ -194,14 +187,14 @@ class _MechanicalMaterialTaskPanel:
         self.form.cb_materials.setCurrentIndex(index)
         self.set_mat_params_in_combo_box(self.obj.Material)
         gen_mat_desc = ""
-        if 'General_description' in self.obj.Material:
-            gen_mat_desc = self.obj.Material['General_description']
+        if 'Description' in self.obj.Material:
+            gen_mat_desc = self.obj.Material['Description']
         self.form.l_mat_description.setText(gen_mat_desc)
         self.print_mat_data(self.obj.Material)
 
     def get_material_name(self, material):
-        if 'General_name' in self.previous_material:
-            return self.previous_material['General_name']
+        if 'Name' in self.previous_material:
+            return self.previous_material['Name']
         else:
             return 'None'
 
@@ -215,16 +208,19 @@ class _MechanicalMaterialTaskPanel:
     def print_mat_data(self, matmap):
         print 'Material data:'
         print ' Name = {}'.format(self.get_material_name(matmap))
-        if 'Mechanical_youngsmodulus' in matmap:
-            print ' YM = ', matmap['Mechanical_youngsmodulus']
-        if 'FEM_poissonratio' in matmap:
-            print ' PR = ', matmap['FEM_poissonratio']
+        if 'YoungsModulus' in matmap:
+            print ' YM = ', matmap['YoungsModulus']
+        if 'PoissonRatio' in matmap:
+            print ' PR = ', matmap['PoissonRatio']
 
     def set_mat_params_in_combo_box(self, matmap):
-        if 'Mechanical_youngsmodulus' in matmap:
-            self.form.input_fd_young_modulus.setText(matmap['Mechanical_youngsmodulus'])
-        if 'FEM_poissonratio' in matmap:
-            self.form.spinBox_poisson_ratio.setValue(float(matmap['FEM_poissonratio']))
+        if 'YoungsModulus' in matmap:
+            ym_new_unit = "MPa"
+            ym = FreeCAD.Units.Quantity(matmap['YoungsModulus'])
+            ym_with_new_unit = ym.getValueAs(ym_new_unit)
+            self.form.input_fd_young_modulus.setText("{} {}".format(ym_with_new_unit, ym_new_unit))
+        if 'PoissonRatio' in matmap:
+            self.form.spinBox_poisson_ratio.setValue(float(matmap['PoissonRatio']))
 
     def add_transient_material(self, material):
         material_name = self.get_material_name(material)

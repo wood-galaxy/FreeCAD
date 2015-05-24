@@ -4,6 +4,10 @@ if(WIN32)
 add_definitions(-DFCGui -DQIIS_MAKEDLL -DOVR_OS_WIN32 -DQUARTER_INTERNAL -DQUARTER_MAKE_DLL -DCOIN_DLL)
 endif(WIN32)
 
+IF(CMAKE_BUILD_TYPE)
+    add_definitions(-DCMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}")
+ENDIF(CMAKE_BUILD_TYPE)
+
 if (FREECAD_USE_3DCONNEXION)
     add_definitions(-D_USE_3DCONNEXION_SDK)
     if(APPLE)
@@ -189,6 +193,7 @@ set(Gui_MOC_HDRS
     DlgSettingsUnitsImp.h
     DlgTipOfTheDayImp.h
     DlgToolbarsImp.h
+    DlgWorkbenchesImp.h
     TaskDlgRelocation.h
     DlgUndoRedo.h
     DockWindow.h
@@ -215,6 +220,7 @@ set(Gui_MOC_HDRS
     PythonDebugger.h
     PythonEditor.h
     QuantitySpinBox.h
+    QListWidgetCustom.h
     ReportView.h
     SceneInspector.h
     SelectionView.h
@@ -283,6 +289,7 @@ SET(Gui_UIC_SRCS
     DlgSettingsMacro.ui
     DlgTipOfTheDay.ui
     DlgToolbars.ui
+    DlgWorkbenches.ui
     DlgTreeWidget.ui
     DlgLocationAngle.ui
     DlgLocationPos.ui
@@ -431,6 +438,8 @@ SET(Dialog_Customize_CPP_SRCS
     DlgCustomizeSpNavSettings.cpp
     DlgKeyboardImp.cpp
     DlgToolbarsImp.cpp
+    DlgWorkbenchesImp.cpp
+    QListWidgetCustom.cpp
 )
 SET(Dialog_Customize_HPP_SRCS
     DlgActionsImp.h
@@ -440,6 +449,8 @@ SET(Dialog_Customize_HPP_SRCS
     DlgCustomizeSpNavSettings.h
     DlgKeyboardImp.h
     DlgToolbarsImp.h
+    DlgWorkbenchesImp.h
+    QListWidgetCustom.h
 )
 SET(Dialog_Customize_SRCS
     ${Dialog_Customize_CPP_SRCS}
@@ -450,6 +461,7 @@ SET(Dialog_Customize_SRCS
     DlgCustomizeSpNavSettings.ui
     DlgKeyboard.ui
     DlgToolbars.ui
+    DlgWorkbenches.ui
 )
 SOURCE_GROUP("Dialog\\Customize" FILES ${Dialog_Customize_SRCS})
 
@@ -669,6 +681,7 @@ SET(View3D_CPP_SRCS
     InventorNavigationStyle.cpp
     CADNavigationStyle.cpp
     BlenderNavigationStyle.cpp
+    OpenCascadeNavigationStyle.cpp
     TouchpadNavigationStyle.cpp
     GestureNavigationStyle.cpp
     SplitView3DInventor.cpp

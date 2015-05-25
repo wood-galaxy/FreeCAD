@@ -348,6 +348,7 @@ class DraftToolBar:
     def _combo (self,name,layout,hide=True):
         cb = QtGui.QComboBox(self.baseWidget)
         cb.setObjectName(name)
+        cb.setSizeAdjustPolicy(QtGui.QComboBox.AdjustToContents)
         if hide: cb.hide()
         layout.addWidget(cb)
         return cb
@@ -556,8 +557,9 @@ class DraftToolBar:
             self.wplabel.setText("Auto")
         self.constrButton = self._pushbutton("constrButton", self.toptray, hide=False, icon='Draft_Construction',width=22, checkable=True)
         self.constrColor = QtGui.QColor(self.paramconstr)
+        self.refreshGroupButton = self._pushbutton("refreshGroupButton", self.toptray, hide=False, icon='Draft_Rotate',width=22)
         self.visgroupCombo = self._combo("visgroupCombo", self.toptray, hide=False)
-        self.visgroupCombo.addItems(0,"None","Construction","New VisGroup","New Group")
+        self.setDocGroup()
         self.colorButton = self._pushbutton("colorButton",self.bottomtray, hide=False,width=22)
         self.colorPix = QtGui.QPixmap(16,16)
         self.colorPix.fill(self.color)
@@ -578,6 +580,7 @@ class DraftToolBar:
         QtCore.QObject.connect(self.fontsizeButton,QtCore.SIGNAL("valueChanged(double)"),self.setfontsize)
         QtCore.QObject.connect(self.applyButton,QtCore.SIGNAL("pressed()"),self.apply)
         QtCore.QObject.connect(self.constrButton,QtCore.SIGNAL("toggled(bool)"),self.toggleConstrMode)
+        QtCore.QObject.connect(self.refreshGroupButton,QtCore.SIGNAL("pressed()"),self.setDocGroup)
 
     def setupStyle(self):
         style = "#constrButton:Checked {background-color: "
@@ -1500,6 +1503,18 @@ class DraftToolBar:
                 a = math.degrees(-DraftVecUtils.angle(dp,plane.u,plane.axis))
                 self.angleValue.setText(displayExternal(a,self.DECIMALS,'Angle'))
 
+    def setDocGroup(self):
+        groupList = []
+        if FreeCAD.ActiveDocument:
+            for obj in FreeCAD.ActiveDocument.Objects:
+                if obj.TypeId == 'App::DocumentObjectGroupPython':
+                    groupList.append(obj)
+                if obj.TypeId == 'App::DocumentObjectGroup':
+                    groupList.append(obj)
+        self.visgroupCombo.clear()
+        self.visgroupCombo.addItem('None')
+        for grp in groupList:
+            self.visgroupCombo.addItem(grp.Name)
 
     def getDefaultColor(self,type,rgb=False):
         "gets color from the preferences or toolbar"

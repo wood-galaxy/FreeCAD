@@ -296,6 +296,7 @@ class Component:
         obj.addProperty("App::PropertyString","Description","Arch",translate("Arch","An optional description for this component"))
         obj.addProperty("App::PropertyString","Tag","Arch",translate("Arch","An optional tag for this component"))
         obj.addProperty("App::PropertyMap","IfcAttributes","Arch",translate("Arch","Custom IFC properties and attributes"))
+        obj.addProperty("App::PropertyLink","IfcProperties","Arch",translate("Arch","Custom IFC properties and attributes"))
         obj.addProperty("App::PropertyLink","BaseMaterial","Material",translate("Arch","A material for this object"))
         obj.addProperty("App::PropertyEnumeration","Role","Arch",translate("Arch","The role of this object"))
         obj.addProperty("App::PropertyBool","MoveWithHost","Arch",translate("Arch","Specifies if this object must move together when its host is moved"))

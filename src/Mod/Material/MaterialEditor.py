@@ -231,7 +231,7 @@ class MaterialEditor:
         if not name:
             name = "Material"
         filename = QtGui.QFileDialog.getSaveFileName(QtGui.qApp.activeWindow(),'Save FreeCAD Material file',name+'.FCMat')
-        if filename:
+        if filename[0]:
             d = self.getDict()
             if d:
                 import importFCMat

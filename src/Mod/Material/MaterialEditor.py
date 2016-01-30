@@ -218,7 +218,7 @@ class MaterialEditor:
     def openfile(self):
         "Opens a FCMat file"
         filename = QtGui.QFileDialog.getOpenFileName(QtGui.qApp.activeWindow(),'Open FreeCAD Material file','*.FCMat')
-        if filename:
+        if filename[0]:
             self.clearEditor()
             import importFCMat
             d = importFCMat.read(filename[0])

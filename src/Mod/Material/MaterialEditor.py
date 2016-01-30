@@ -69,6 +69,7 @@ class MaterialEditor:
             d = self.material
         if d:
             self.updateContents(d)
+            self.backup = d
 
     def updateCards(self):
         "updates the contents of the materials combo with existing material cards"
@@ -127,6 +128,8 @@ class MaterialEditor:
         QtGui.QDialog.accept(self.widget)
         
     def reject(self):
+        self.clearEditor()
+        self.updateContents(self.backup)
         QtGui.QDialog.reject(self.widget)
         
     def expandKey(self, key):
@@ -257,9 +260,5 @@ def editMaterial(material):
     """editMaterial(material): opens the editor to edit the contents
     of the given material dictionary. Returns the modified material."""
     editor = MaterialEditor(material=material)
-    result = editor.exec_()
-    if result:
-        return editor.getDict()
-    else:
-        return material
-
+    editor.exec_()
+    return editor.getDict()

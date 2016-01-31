@@ -295,6 +295,8 @@ def insert(filename,docname,skip=[],only=[],root=None):
     ROOT_ELEMENT = p.GetString("ifcRootElement","IfcProduct")
     GET_EXTRUSIONS = p.GetBool("ifcGetExtrusions",False)
     MERGE_MATERIALS = p.GetBool("ifcMergeMaterials",False)
+    IMPORT_PROPERTIES = p.GetBool("ifcImportProperties",False)
+    EXPORT_PROPERTIES = p.GetBool("ifcExportProperties",False)
     if root:
         ROOT_ELEMENT = root
     MERGE_MODE_ARCH = p.GetInt("ifcImportModeArch",0)
@@ -360,16 +362,17 @@ def insert(filename,docname,skip=[],only=[],root=None):
         groups.setdefault(r.RelatingGroup.id(),[]).extend([e.id() for e in r.RelatedObjects])
     for r in ifcfile.by_type("IfcRelVoidsElement"):
         subtractions.append([r.RelatedOpeningElement.id(), r.RelatingBuildingElement.id()])
-    for r in ifcfile.by_type("IfcRelDefinesByProperties"):
-        for obj in r.RelatedObjects:
-            if not obj.id() in properties :
-                properties[obj.id()] = {}
-            prop_by_category = {}
-            prop = []
-            if r.RelatingPropertyDefinition.is_a("IfcPropertySet"):
-                prop.extend([e.id() for e in r.RelatingPropertyDefinition.HasProperties])
-                prop_by_category[r.RelatingPropertyDefinition.id()] = prop
-                properties[obj.id()].update(prop_by_category)
+    if IMPORT_PROPERTIES :
+        for r in ifcfile.by_type("IfcRelDefinesByProperties"):
+            for obj in r.RelatedObjects:
+                if not obj.id() in properties :
+                    properties[obj.id()] = {}
+                prop_by_category = {}
+                prop = []
+                if r.RelatingPropertyDefinition.is_a("IfcPropertySet"):
+                    prop.extend([e.id() for e in r.RelatingPropertyDefinition.HasProperties])
+                    prop_by_category[r.RelatingPropertyDefinition.id()] = prop
+                    properties[obj.id()].update(prop_by_category)
     for r in ifcfile.by_type("IfcRelAssociatesMaterial"):
         for o in r.RelatedObjects:
             mattable[o.id()] = r.RelatingMaterial.id()
@@ -602,15 +605,16 @@ def insert(filename,docname,skip=[],only=[],root=None):
             objects[pid] = obj
 
             # properties
-            if pid in properties:
+            if IMPORT_PROPERTIES and pid in properties :
                 if hasattr(obj,"IfcAttributes"):
-                    import Spreadsheet
-                    ifc_spreadsheet = doc.addObject('Spreadsheet::Sheet','IfcProperty'+str(name))
-                    ifc_spreadsheet.set('A1', 'Categorie')
-                    ifc_spreadsheet.set('B1', 'Cle')
-                    ifc_spreadsheet.set('C1', 'Type')
-                    ifc_spreadsheet.set('D1', 'Valeur')
-                    ifc_spreadsheet.set('E1', 'Unite')
+                    #import Spreadsheet
+                    ifc_spreadsheet = Arch.makeIfcSpreadsheet()
+                    #ifc_spreadsheet = doc.addObject('Spreadsheet::Sheet','IfcProperty'+str(name))
+                    #ifc_spreadsheet.set('A1', 'Categorie')
+                    #ifc_spreadsheet.set('B1', 'Cle')
+                    #ifc_spreadsheet.set('C1', 'Type')
+                    #ifc_spreadsheet.set('D1', 'Valeur')
+                    #ifc_spreadsheet.set('E1', 'Unite')
                     n=2
                     for c in properties[pid].keys():
                         o = ifcfile[c]
@@ -954,7 +958,7 @@ def export(exportList,filename):
                 ifcfile.createIfcRelVoidsElement(ifcopenshell.guid.compress(uuid.uuid1().hex),history,'Subtraction','',product,prod2)
 
         # properties
-        if hasattr(obj,"IfcProperties"):
+        if EXPORT_PROPERTIES and hasattr(obj,"IfcProperties"):
             if obj.IfcProperties:
                 if obj.IfcProperties.TypeId == 'Spreadsheet::Sheet':
                     sheet = obj.IfcProperties

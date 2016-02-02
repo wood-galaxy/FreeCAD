@@ -296,7 +296,6 @@ def insert(filename,docname,skip=[],only=[],root=None):
     GET_EXTRUSIONS = p.GetBool("ifcGetExtrusions",False)
     MERGE_MATERIALS = p.GetBool("ifcMergeMaterials",False)
     IMPORT_PROPERTIES = p.GetBool("ifcImportProperties",False)
-    EXPORT_PROPERTIES = p.GetBool("ifcExportProperties",False)
     if root:
         ROOT_ELEMENT = root
     MERGE_MODE_ARCH = p.GetInt("ifcImportModeArch",0)
@@ -348,7 +347,7 @@ def insert(filename,docname,skip=[],only=[],root=None):
     additions = {} # { host:[child,...], ... }
     groups = {} # { host:[child,...], ... }     # used in structural IFC
     subtractions = [] # [ [opening,host], ... ]
-    properties = {} # { host:[property, ...], ... }
+    properties = {} # { obj : { cat : [property, ... ], ... }, ... }
     colors = {} # { id:(r,g,b) }
     shapes = {} # { id:shaoe } only used for merge mode
     structshapes = {} # { id:shaoe } only used for merge mode
@@ -362,17 +361,16 @@ def insert(filename,docname,skip=[],only=[],root=None):
         groups.setdefault(r.RelatingGroup.id(),[]).extend([e.id() for e in r.RelatedObjects])
     for r in ifcfile.by_type("IfcRelVoidsElement"):
         subtractions.append([r.RelatedOpeningElement.id(), r.RelatingBuildingElement.id()])
-    if IMPORT_PROPERTIES :
-        for r in ifcfile.by_type("IfcRelDefinesByProperties"):
-            for obj in r.RelatedObjects:
-                if not obj.id() in properties :
-                    properties[obj.id()] = {}
-                prop_by_category = {}
-                prop = []
-                if r.RelatingPropertyDefinition.is_a("IfcPropertySet"):
-                    prop.extend([e.id() for e in r.RelatingPropertyDefinition.HasProperties])
-                    prop_by_category[r.RelatingPropertyDefinition.id()] = prop
-                    properties[obj.id()].update(prop_by_category)
+    for r in ifcfile.by_type("IfcRelDefinesByProperties"):
+        for obj in r.RelatedObjects:
+            if not obj.id() in properties :
+                properties[obj.id()] = {}
+            prop_by_category = {}
+            prop = []
+            if r.RelatingPropertyDefinition.is_a("IfcPropertySet"):
+                prop.extend([e.id() for e in r.RelatingPropertyDefinition.HasProperties])
+                prop_by_category[r.RelatingPropertyDefinition.id()] = prop
+                properties[obj.id()].update(prop_by_category)
     for r in ifcfile.by_type("IfcRelAssociatesMaterial"):
         for o in r.RelatedObjects:
             mattable[o.id()] = r.RelatingMaterial.id()
@@ -605,34 +603,39 @@ def insert(filename,docname,skip=[],only=[],root=None):
             objects[pid] = obj
 
             # properties
-            if IMPORT_PROPERTIES and pid in properties :
+            if pid in properties :
                 if hasattr(obj,"IfcAttributes"):
-                    #import Spreadsheet
-                    ifc_spreadsheet = Arch.makeIfcSpreadsheet()
-                    #ifc_spreadsheet = doc.addObject('Spreadsheet::Sheet','IfcProperty'+str(name))
-                    #ifc_spreadsheet.set('A1', 'Categorie')
-                    #ifc_spreadsheet.set('B1', 'Cle')
-                    #ifc_spreadsheet.set('C1', 'Type')
-                    #ifc_spreadsheet.set('D1', 'Valeur')
-                    #ifc_spreadsheet.set('E1', 'Unite')
-                    n=2
+                    a = obj.IfcAttributes
+                    if IMPORT_PROPERTIES :
+                        ifc_spreadsheet = Arch.makeIfcSpreadsheet()
+                        n=2
                     for c in properties[pid].keys():
                         o = ifcfile[c]
+                        if DEBUG :
+                            print("IFC Categroy Name",o.Name,type(o.Name))
                         catname = o.Name
                         for p in properties[pid][c]:
                             l = ifcfile[p]
                             if l.is_a("IfcPropertySingleValue"):
-                                ifc_spreadsheet.set(str('A'+str(n)), catname)
-                                ifc_spreadsheet.set(str('B'+str(n)), l.Name.encode("utf8"))
-                                ifc_spreadsheet.set(str('C'+str(n)), l.NominalValue.is_a())
-                                if l.NominalValue.is_a() in ['IfcLabel','IfcText','IfcIdentifier']:
-                                    ifc_spreadsheet.set(str('D'+str(n)), "'" + str(l.NominalValue.wrappedValue.encode("utf8")))
-                                else :
-                                    ifc_spreadsheet.set(str('D'+str(n)), str(l.NominalValue.wrappedValue))
-                                if hasattr(l.NominalValue,'Unit') :
-                                    ifc_spreadsheet.set(str('E'+str(n)), str(l.NominalValue.Unit))
-                                n += 1
+                                a[l.Name.encode("utf8")] = str(l.NominalValue)
+                                if IMPORT_PROPERTIES :
+                                    if DEBUG :
+                                        print("l.Name",l.Name,type(l.Name))
+                                        print("l.NominalValue.is_a()",l.NominalValue.is_a(),type(l.NominalValue.is_a()))
+                                        print("l.NominalValue.wrappedValue",l.NominalValue.wrappedValue,type(l.NominalValue.wrappedValue))
+                                        #print("l.NominalValue.Unit",l.NominalValue.Unit,type(l.NominalValue.Unit))
+                                    ifc_spreadsheet.set(str('A'+str(n)), catname.encode("utf8"))
+                                    ifc_spreadsheet.set(str('B'+str(n)), l.Name.encode("utf8"))
+                                    ifc_spreadsheet.set(str('C'+str(n)), l.NominalValue.is_a())
+                                    if l.NominalValue.is_a() in ['IfcLabel','IfcText','IfcIdentifier']:
+                                        ifc_spreadsheet.set(str('D'+str(n)), "'" + str(l.NominalValue.wrappedValue.encode("utf8")))
+                                    else :
+                                        ifc_spreadsheet.set(str('D'+str(n)), str(l.NominalValue.wrappedValue))
+                                    if hasattr(l.NominalValue,'Unit') :
+                                        ifc_spreadsheet.set(str('E'+str(n)), str(l.NominalValue.Unit))
+                                    n += 1
                     obj.IfcProperties = ifc_spreadsheet
+                    obj.IfcAttributes = a
 
             # color
             if FreeCAD.GuiUp and (pid in colors) and hasattr(obj.ViewObject,"ShapeColor"):
@@ -820,6 +823,7 @@ def export(exportList,filename):
 
     p = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Arch")
     FORCEBREP = p.GetBool("ifcExportAsBrep",False)
+    EXPORT_PROPERTIES = p.GetBool("ifcExportProperties",False)
     DEBUG = p.GetBool("ifcDebug",False)
 
     try:
@@ -959,6 +963,7 @@ def export(exportList,filename):
 
         # properties
         if EXPORT_PROPERTIES and hasattr(obj,"IfcProperties"):
+            if DEBUG : print("      add ifc properties")
             if obj.IfcProperties:
                 if obj.IfcProperties.TypeId == 'Spreadsheet::Sheet':
                     sheet = obj.IfcProperties
@@ -975,6 +980,11 @@ def export(exportList,filename):
                                 val = sheet.get('D'+str(n))
                             else:
                                 val = ''
+                            if isinstance(key, unicode):
+                                key = key.encode("utf8")
+                            else :
+                                key = str(key)
+                            tp = tp.encode("utf8")
                             if tp in ["IfcLabel","IfcText","IfcIdentifier"]:
                                 val = val.encode("utf8")
                             elif tp == "IfcBoolean":
@@ -999,7 +1009,11 @@ def export(exportList,filename):
                     for cat in propertiesDic:
                         props = []
                         for prop in propertiesDic[cat] :
-                            props.append(ifcfile.createIfcPropertySingleValue(str(prop["key"]),None,ifcfile.create_entity(str(prop["tp"]),prop["val"]),None))
+                            if DEBUG :
+                                print("key",prop["key"],type(prop["key"]))
+                                print("tp",prop["tp"],type(prop["tp"]))
+                                print("val",prop["val"],type(prop["val"]))
+                            props.append(ifcfile.createIfcPropertySingleValue(prop["key"],None,ifcfile.create_entity(prop["tp"],prop["val"]),None))
                         pset = ifcfile.createIfcPropertySet(ifcopenshell.guid.compress(uuid.uuid1().hex),history,cat,None,props)
                         ifcfile.createIfcRelDefinesByProperties(ifcopenshell.guid.compress(uuid.uuid1().hex),history,None,None,[product],pset)
 

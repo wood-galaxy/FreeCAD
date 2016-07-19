@@ -669,6 +669,16 @@ def pruneIncluded(objectslist):
             newlist.append(obj)
     return newlist
 
+def printMessage(message):
+	FreeCAD.Console.PrintMessage(translate("Arch", message.decode("utf8")))
+	if FreeCAD.GuiUp :
+		reply = QtGui.QMessageBox.information(None,"", message.decode("utf8"))
+
+def printWarning(message):
+	FreeCAD.Console.PrintWarning(translate("Arch", message.decode("utf8")))
+	if FreeCAD.GuiUp :
+		reply = QtGui.QMessageBox.warning(None,"", message.decode("utf8"))
+
 class _SurveyObserver:
     "an observer for the survey() function"
     def __init__(self,callback):
